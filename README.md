@@ -15,7 +15,7 @@ Highlight Features: Generate multi-view images
 
 ## 🔥 Updates
 
-* [2025-03-17] Release model weights for partial-image conditioned geometry-to-multiview generation, which can be used with [MIDI](https://github.com/VAST-AI-Research/MIDI-3D) to generated textured 3D scenes. [See [guidelines](#partial-image--geometry-to-multiview)]
+* **[2025-03-17] Release model weights for partial-image conditioned geometry-to-multiview generation, which can be used to generate textured 3D scenes combined with [MIDI](https://github.com/VAST-AI-Research/MIDI-3D).** [See [guidelines](#partial-image--geometry-to-multiview)]
 * [2025-03-07] Release model weights for geometry-guided multi-view generation. [See [guidelines](#text-geometry-to-multiview-generation)]
 * [2024-12-27] Release model weights, gradio demo, inference scripts and comfyui of text-/image- to multi-view generation models.
 
