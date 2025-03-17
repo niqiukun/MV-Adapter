@@ -15,8 +15,9 @@ Highlight Features: Generate multi-view images
 
 ## 🔥 Updates
 
-* [2025-03] Release model weights for geometry-guided multi-view generation. [See [guidelines](#text-geometry-to-multiview-generation)]
-* [2024-12] Release model weights, gradio demo, inference scripts and comfyui of text-/image- to multi-view generation models.
+* [2025-03-17] Release model weights for partial-image conditioned geometry-to-multiview generation, which can be used with [MIDI](https://github.com/VAST-AI-Research/MIDI-3D) to generated textured 3D scenes. [See [guidelines](#partial-image--geometry-to-multiview)]
+* [2025-03-07] Release model weights for geometry-guided multi-view generation. [See [guidelines](#text-geometry-to-multiview-generation)]
+* [2024-12-27] Release model weights, gradio demo, inference scripts and comfyui of text-/image- to multi-view generation models.
 
 ## TOC
 
@@ -42,7 +43,7 @@ Notes: Running MV-Adapter for SDXL may need higher GPU memory and more time, but
 |     Image-to-Multiview      |   SD2.1    |  [mvadapter_i2mv_sd21.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_i2mv_sd21.safetensors)  |                                                                                                                                               |
 |     Image-to-Multiview      |    SDXL    |  [mvadapter_i2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_t2mv_sdxl.safetensors)  |                                      [Demo](https://huggingface.co/spaces/VAST-AI/MV-Adapter-I2MV-SDXL)                                       |
 | Text-Geometry-to-Multiview  |    SDXL    | [mvadapter_tg2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_tg2mv_sdxl.safetensors) |                                                                                                                                               |
-| Image-Geometry-to-Multiview |    SDXL    | [mvadapter_ig2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_ig2mv_sdxl.safetensors) |                                                                                                                                               |
+| Image-Geometry-to-Multiview |    SDXL    | [mvadapter_ig2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_ig2mv_sdxl.safetensors) / [mvadapter_ig2mv_partial_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_ig2mv_partial_sdxl.safetensors) |                                                                                                                                               |
 |  Image-to-Arbitrary-Views   |    SDXL    |                                                                                                                              |                                                                                                                                               |
 
 ## Installation
@@ -287,6 +288,37 @@ python -m scripts.inference_ig2mv_sdxl \
 ```
 
 ![example_ig2mv_out](assets/demo/ig2mv/1ccd5c1563ea4f5fb8152eac59dabd5c_mv.png)
+
+#### Partial Image + Geometry to Multiview
+
+**With SDXL:**
+
+```Bash
+python -m scripts.inference_ig2mv_partial_sdxl \
+--image assets/demo/ig2mv/cartoon_style_table.png \
+--mesh assets/demo/ig2mv/cartoon_style_table.glb \
+--output output.png
+```
+
+Example input:
+<img src="assets/demo/ig2mv/cartoon_style_table.png" alt="partial input" style="width: 20%">
+
+Example output:
+![example_partial_ig2mv](assets/demo/ig2mv/cartoon_style_table_mv.png)
+
+The above command will save a `*_transform.json` file in the output dir, which contains transformation information like this:
+```json
+{
+    "offset": [
+        0.7446051140100826,
+        -0.3421213991056582,
+        0.1360104325533671
+    ],
+    "scale": 1.0086087120792668
+}
+```
+
+You can use it to transform your mesh into the canonical space, map the generated multi-view images onto the mesh, and then re-transform the mesh back to the original spatial position.
 
 ### ComfyUI
 

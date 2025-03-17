@@ -131,6 +131,7 @@ def load_mesh(
     shape_init_mesh_front: str = "+x",
     front_x_to_y: bool = False,
     device: Optional[str] = None,
+    return_transform: bool = False,
 ) -> TexturedMesh:
     scene = trimesh.load(mesh_path, force="mesh", process=False)
     if isinstance(scene, trimesh.Trimesh):
@@ -224,6 +225,9 @@ def load_mesh(
         )
 
     textured_mesh.to(device)
+
+    if return_transform:
+        return textured_mesh, np.array(centroid), max_scale / scale
 
     return textured_mesh
 
