@@ -21,14 +21,26 @@ Highlight Features: Generate multi-view images
 
 ## TOC
 
-* [Model Zoo & Demos](#model-zoo--demos)
-* [Installation](#installation)
-* [Notes](#notes)
-* [Usage: Multi-view Generation](#usage-multiview-generation)
-  * Option1. [Launch Demo](#launch-demo)
-  * Option2. [Inference Scripts](#inference-scripts)
-  * Option3. [ComfyUI](#comfyui)
-* [Citation](#citation)
+- [MV-Adapter: Multi-view Consistent Image Generation Made Easy🚀](#mv-adapter-multi-view-consistent-image-generation-made-easy)
+  - [🏠 Project Page | Paper | Model Weights | Demo | ComfyUI](#-project-page--paper--model-weights--demo--comfyui)
+  - [🔥 Updates](#-updates)
+  - [TOC](#toc)
+  - [Model Zoo \& Demos](#model-zoo--demos)
+  - [Installation](#installation)
+  - [Notes](#notes)
+    - [System Requirements](#system-requirements)
+  - [Usage: Multiview Generation](#usage-multiview-generation)
+    - [Launch Demo](#launch-demo)
+      - [Text to Multiview Generation](#text-to-multiview-generation)
+      - [Image to Multiview Generation](#image-to-multiview-generation)
+    - [Inference Scripts](#inference-scripts)
+      - [Text to Multiview Generation](#text-to-multiview-generation-1)
+      - [Image to Multiview Generation](#image-to-multiview-generation-1)
+      - [Text-Geometry to Multiview Generation](#text-geometry-to-multiview-generation)
+      - [Image-Geometry to Multiview Generation](#image-geometry-to-multiview-generation)
+      - [Partial Image + Geometry to Multiview](#partial-image--geometry-to-multiview)
+    - [ComfyUI](#comfyui)
+  - [Citation](#citation)
 
 ## Model Zoo & Demos
 
@@ -36,15 +48,15 @@ No need to download manually. Running the scripts will download model weights au
 
 Notes: Running MV-Adapter for SDXL may need higher GPU memory and more time, but produce higher-quality and higher-resolution results. On the other hand, running its SD2.1 variant needs lower computing cost, but shows a bit lower performance.
 
-|            Model            | Base Model |                                                          HF Weights                                                          |                                                                   Demo Link                                                                   |
-| :-------------------------: | :--------: | :--------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------: |
-|      Text-to-Multiview      |   SD2.1    |  [mvadapter_t2mv_sd21.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_t2mv_sd21.safetensors)  |                                                                                                                                               |
-|      Text-to-Multiview      |    SDXL    |  [mvadapter_t2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_t2mv_sdxl.safetensors)  | [General](https://huggingface.co/spaces/VAST-AI/MV-Adapter-T2MV-SDXL) / [Anime](https://huggingface.co/spaces/huanngzh/MV-Adapter-T2MV-Anime) |
-|     Image-to-Multiview      |   SD2.1    |  [mvadapter_i2mv_sd21.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_i2mv_sd21.safetensors)  |                                                                                                                                               |
-|     Image-to-Multiview      |    SDXL    |  [mvadapter_i2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_t2mv_sdxl.safetensors)  |                                      [Demo](https://huggingface.co/spaces/VAST-AI/MV-Adapter-I2MV-SDXL)                                       |
-| Text-Geometry-to-Multiview  |    SDXL    | [mvadapter_tg2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_tg2mv_sdxl.safetensors) |                                                                                                                                               |
+|            Model            | Base Model |                                                                                                                                 HF Weights                                                                                                                                  |                                                                   Demo Link                                                                   |
+| :-------------------------: | :--------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------: |
+|      Text-to-Multiview      |   SD2.1    |                                                                         [mvadapter_t2mv_sd21.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_t2mv_sd21.safetensors)                                                                          |                                                                                                                                               |
+|      Text-to-Multiview      |    SDXL    |                                                                         [mvadapter_t2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_t2mv_sdxl.safetensors)                                                                          | [General](https://huggingface.co/spaces/VAST-AI/MV-Adapter-T2MV-SDXL) / [Anime](https://huggingface.co/spaces/huanngzh/MV-Adapter-T2MV-Anime) |
+|     Image-to-Multiview      |   SD2.1    |                                                                         [mvadapter_i2mv_sd21.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_i2mv_sd21.safetensors)                                                                          |                                                                                                                                               |
+|     Image-to-Multiview      |    SDXL    |                                                                         [mvadapter_i2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_t2mv_sdxl.safetensors)                                                                          |                                      [Demo](https://huggingface.co/spaces/VAST-AI/MV-Adapter-I2MV-SDXL)                                       |
+| Text-Geometry-to-Multiview  |    SDXL    |                                                                        [mvadapter_tg2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_tg2mv_sdxl.safetensors)                                                                         |                                                                                                                                               |
 | Image-Geometry-to-Multiview |    SDXL    | [mvadapter_ig2mv_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_ig2mv_sdxl.safetensors) / [mvadapter_ig2mv_partial_sdxl.safetensors](https://huggingface.co/huanngzh/mv-adapter/resolve/main/mvadapter_ig2mv_partial_sdxl.safetensors) |                                                                                                                                               |
-|  Image-to-Arbitrary-Views   |    SDXL    |                                                                                                                              |                                                                                                                                               |
+|  Image-to-Arbitrary-Views   |    SDXL    |                                                                                                                                                                                                                                                                             |                                                                                                                                               |
 
 ## Installation
 
