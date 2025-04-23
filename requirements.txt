@@ -11,9 +11,17 @@ pillow
 omegaconf
 trimesh
 einops
-gradio==4.44.1
+gradio
 timm
 kornia
 scikit-image
 sentencepiece
 git+https://github.com/NVlabs/nvdiffrast.git
+
+# new added for training
+pytorch-lightning
+
+# new added for texturing
+spandrel
+open3d
+pymeshlab

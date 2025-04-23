@@ -15,6 +15,7 @@ Highlight Features: Generate multi-view images
 
 ## 🔥 Updates
 
+* [2025-04-23] Release dataset ([Objaverse-Ortho10View](https://huggingface.co/datasets/huanngzh/Objaverse-Ortho10View) and [Objaverse-Rand6View](https://huggingface.co/datasets/huanngzh/Objaverse-Rand6View)) and training code. [See [guidelines](#️-training)]
 * [2025-03-31] Release text/image-conditioned 3D texture generation demos on [Text2Texture](https://huggingface.co/spaces/VAST-AI/MV-Adapter-Text2Texture) and [Image2Texture](https://huggingface.co/spaces/VAST-AI/MV-Adapter-Img2Texture). Feel free to try them!
 * [2025-03-17] Release model weights for partial-image conditioned geometry-to-multiview generation, which can be used to generate textured 3D scenes combined with [MIDI](https://github.com/VAST-AI-Research/MIDI-3D). [See [guidelines](#partial-image--geometry-to-multiview)]
 * [2025-03-07] Release model weights for geometry-guided multi-view generation. [See [guidelines](#text-geometry-to-multiview-generation)]
@@ -348,6 +349,74 @@ Please check <a href="https://github.com/huanngzh/ComfyUI-MVAdapter" target="_bl
 **Image to Multiview Generation**
 
 ![comfyui_i2mv](assets/doc/comfyui_i2mv.png)
+
+## 📊 Dataset
+
+Our training dataset, rendered from [Objaverse](https://huggingface.co/datasets/allenai/objaverse), can be downloaded from [Objaverse-Ortho10View](https://huggingface.co/datasets/huanngzh/Objaverse-Ortho10View) and [Objaverse-Rand6View](https://huggingface.co/datasets/huanngzh/Objaverse-Rand6View).
+
+* [Objaverse-Ortho10View](https://huggingface.co/datasets/huanngzh/Objaverse-Ortho10View) contains 10 orthographic views of 1024x1024 resolution, and is used as ground truth.
+* [Objaverse-Rand6View](https://huggingface.co/datasets/huanngzh/Objaverse-Rand6View) contains 6 randomly distributed views, and is used as reference image conditions.
+
+Please refer to their dataset cards to extract the data files, and organize them into the following structures:
+
+```Bash
+data
+├── texture_ortho10view_easylight_objaverse # Objaverse-Ortho10View
+│   ├── 00
+│   │   ├── 00a4d2b0c4c240289ed456e87d8b9e02
+│   ...
+├── texture_rand_easylight_objaverse # Objaverse-Rand6View
+│   ├── 00
+│   │   ├── 00a4d2b0c4c240289ed456e87d8b9e02
+│   ...
+├── objaverse_list_6w.json # objaverse ids
+└── objaverse_short_captions.json # id to captions
+```
+
+## 🏋️ Training
+
+The key training code can be found in `mvadapter/systems`:
+
+* `MVAdapterTextSDXLSystem` in `mvadapter_text_sdxl.py` is used for text or text+geometry conditioned multi-view generation.
+* `MVAdapterImageSDXLSystem` in `mvadapter_image_sdxl.py` is used for image or image+geometry conditioned multi-view generation.
+
+The specific training commands are as follows:
+
+For text to 6 view generation:
+
+```Bash
+python launch.py --config configs/view-guidance/mvadapter_t2mv_sdxl.yaml --train --gpu 0,1,2,3,4,5,6,7
+```
+
+For single image to 6 view generation:
+
+```Bash
+python launch.py --config configs/view-guidance/mvadapter_i2mv_sdxl.yaml --train --gpu 0,1,2,3,4,5,6,7
+```
+
+For single image to 2/3/4/6 view generation:
+
+```Bash
+python launch.py --config configs/view-guidance/mvadapter_i2mv_sdxl_aug_quantity.yaml --train --gpu 0,1,2,3,4,5,6,7
+```
+
+For text + geometry to 6 view generation:
+
+```Bash
+python launch.py --config configs/geometry-guidance/mvadapter_tg2mv_sdxl.yaml --train --gpu 0,1,2,3,4,5,6,7
+```
+
+For single image + geometry to 6 view generation:
+
+```Bash
+python launch.py --config configs/geometry-guidance/mvadapter_ig2mv_sdxl.yaml --train --gpu 0,1,2,3,4,5,6,7
+```
+
+For single partial image + geometry to 6 view generation (used for texture generation conditioned on occluded image, for example, used in [MIDI-3D](https://github.com/VAST-AI-Research/MIDI-3D)):
+
+```Bash
+python launch.py --config configs/geometry-guidance/mvadapter_ig2mv_partialimg_sdxl.yaml --train --gpu 0,1,2,3,4,5,6,7
+```
 
 ## Citation
 
