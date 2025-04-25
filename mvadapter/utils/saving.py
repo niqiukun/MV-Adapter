@@ -102,11 +102,8 @@ def make_image_grid(
 
 
 class SaverMixin:
-    from pytorch_lightning.loggers import WandbLogger
-    from .core import debug, find, info, warn
-
     _save_dir: Optional[str] = None
-    _wandb_logger: Optional[WandbLogger] = None
+    _wandb_logger: Optional[Any] = None
 
     def set_save_dir(self, save_dir: str):
         self._save_dir = save_dir
@@ -485,6 +482,8 @@ class SaverMixin:
             imgs = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in imgs]
             imageio.mimsave(save_path, imgs, fps=fps)
         if name and self._wandb_logger:
+            from .core import warn
+
             warn("Wandb logger does not support video logging yet!")
         return save_path
 
@@ -516,6 +515,8 @@ class SaverMixin:
                 if delete:
                     shutil.rmtree(img_dir_)
             except:
+                from .core import warn
+
                 warn(f"Video saving for directory {seq_dir_} failed!")
 
     def save_file(self, filename, src_path, delete=False) -> str:
