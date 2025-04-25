@@ -16,7 +16,6 @@ from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
 from PIL import Image, ImageDraw
 
-from .core import debug, find, info, warn
 from .typing import *
 
 
@@ -104,6 +103,7 @@ def make_image_grid(
 
 class SaverMixin:
     from pytorch_lightning.loggers import WandbLogger
+    from .core import debug, find, info, warn
 
     _save_dir: Optional[str] = None
     _wandb_logger: Optional[WandbLogger] = None
