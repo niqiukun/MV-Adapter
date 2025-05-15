@@ -12,224 +12,9 @@ import trimesh
 from PIL import Image
 from torch import BoolTensor, FloatTensor
 
-from . import logging
 from .camera import Camera
-
-logger = logging.get_logger(__name__)
-
-
-def dot(x: torch.FloatTensor, y: torch.FloatTensor) -> torch.FloatTensor:
-    return torch.sum(x * y, -1, keepdim=True)
-
-
-@dataclass
-class TexturedMesh:
-    v_pos: torch.FloatTensor
-    t_pos_idx: torch.LongTensor
-
-    # texture coordinates
-    v_tex: Optional[torch.FloatTensor] = None
-    t_tex_idx: Optional[torch.LongTensor] = None
-
-    # texture map
-    texture: Optional[torch.FloatTensor] = None
-
-    # vertices, faces after vertex merging
-    _stitched_v_pos: Optional[torch.FloatTensor] = None
-    _stitched_t_pos_idx: Optional[torch.LongTensor] = None
-
-    _v_nrm: Optional[torch.FloatTensor] = None
-
-    @property
-    def v_nrm(self) -> torch.FloatTensor:
-        if self._v_nrm is None:
-            self._v_nrm = self._compute_vertex_normal()
-        return self._v_nrm
-
-    def set_stitched_mesh(
-        self, v_pos: torch.FloatTensor, t_pos_idx: torch.LongTensor
-    ) -> None:
-        self._stitched_v_pos = v_pos
-        self._stitched_t_pos_idx = t_pos_idx
-
-    @property
-    def stitched_v_pos(self) -> torch.FloatTensor:
-        if self._stitched_v_pos is None:
-            logger.warning("Stitched vertices not available, using original vertices!")
-            return self.v_pos
-        return self._stitched_v_pos
-
-    @property
-    def stitched_t_pos_idx(self) -> torch.LongTensor:
-        if self._stitched_t_pos_idx is None:
-            logger.warning("Stitched faces not available, using original faces!")
-            return self.t_pos_idx
-        return self._stitched_t_pos_idx
-
-    def _compute_vertex_normal(self) -> torch.FloatTensor:
-        if self._stitched_v_pos is None or self._stitched_t_pos_idx is None:
-            logger.warning(
-                "Stitched vertices and faces not available, computing vertex normals on original mesh, which can be erroneous!"
-            )
-            v_pos, t_pos_idx = self.v_pos, self.t_pos_idx
-        else:
-            v_pos, t_pos_idx = self._stitched_v_pos, self._stitched_t_pos_idx
-
-        i0 = t_pos_idx[:, 0]
-        i1 = t_pos_idx[:, 1]
-        i2 = t_pos_idx[:, 2]
-
-        v0 = v_pos[i0, :]
-        v1 = v_pos[i1, :]
-        v2 = v_pos[i2, :]
-
-        face_normals = torch.cross(v1 - v0, v2 - v0)
-
-        # Splat face normals to vertices
-        v_nrm = torch.zeros_like(v_pos)
-        v_nrm.scatter_add_(0, i0[:, None].repeat(1, 3), face_normals)
-        v_nrm.scatter_add_(0, i1[:, None].repeat(1, 3), face_normals)
-        v_nrm.scatter_add_(0, i2[:, None].repeat(1, 3), face_normals)
-
-        # Normalize, replace zero (degenerated) normals with some default value
-        v_nrm = torch.where(
-            dot(v_nrm, v_nrm) > 1e-20, v_nrm, torch.as_tensor([0.0, 0.0, 1.0]).to(v_nrm)
-        )
-        v_nrm = F.normalize(v_nrm, dim=1)
-
-        if torch.is_anomaly_enabled():
-            assert torch.all(torch.isfinite(v_nrm))
-
-        return v_nrm
-
-    def to(self, device: Optional[str] = None):
-        self.v_pos = self.v_pos.to(device)
-        self.t_pos_idx = self.t_pos_idx.to(device)
-        if self.v_tex is not None:
-            self.v_tex = self.v_tex.to(device)
-        if self.t_tex_idx is not None:
-            self.t_tex_idx = self.t_tex_idx.to(device)
-        if self.texture is not None:
-            self.texture = self.texture.to(device)
-        if self._stitched_v_pos is not None:
-            self._stitched_v_pos = self._stitched_v_pos.to(device)
-        if self._stitched_t_pos_idx is not None:
-            self._stitched_t_pos_idx = self._stitched_t_pos_idx.to(device)
-        if self._v_nrm is not None:
-            self._v_nrm = self._v_nrm.to(device)
-
-
-def load_mesh(
-    mesh_path: str,
-    rescale: bool = False,
-    move_to_center: bool = False,
-    scale: float = 0.5,
-    flip_uv: bool = True,
-    merge_vertices: bool = True,
-    default_uv_size: int = 2048,
-    shape_init_mesh_up: str = "+y",
-    shape_init_mesh_front: str = "+x",
-    front_x_to_y: bool = False,
-    device: Optional[str] = None,
-    return_transform: bool = False,
-) -> TexturedMesh:
-    scene = trimesh.load(mesh_path, force="mesh", process=False)
-    if isinstance(scene, trimesh.Trimesh):
-        mesh = scene
-    elif isinstance(scene, trimesh.scene.Scene):
-        mesh = trimesh.Trimesh()
-        for obj in scene.geometry.values():
-            mesh = trimesh.util.concatenate([mesh, obj])
-    else:
-        raise ValueError(f"Unknown mesh type at {mesh_path}.")
-
-    # move to center
-    if move_to_center:
-        centroid = mesh.vertices.mean(0)
-        mesh.vertices = mesh.vertices - centroid
-
-    # rescale
-    if rescale:
-        max_scale = np.abs(mesh.vertices).max()
-        mesh.vertices = mesh.vertices / max_scale * scale
-
-    dirs = ["+x", "+y", "+z", "-x", "-y", "-z"]
-    dir2vec = {
-        "+x": np.array([1, 0, 0]),
-        "+y": np.array([0, 1, 0]),
-        "+z": np.array([0, 0, 1]),
-        "-x": np.array([-1, 0, 0]),
-        "-y": np.array([0, -1, 0]),
-        "-z": np.array([0, 0, -1]),
-    }
-    if shape_init_mesh_up not in dirs or shape_init_mesh_front not in dirs:
-        raise ValueError(
-            f"shape_init_mesh_up and shape_init_mesh_front must be one of {dirs}."
-        )
-    if shape_init_mesh_up[1] == shape_init_mesh_front[1]:
-        raise ValueError(
-            "shape_init_mesh_up and shape_init_mesh_front must be orthogonal."
-        )
-    z_, x_ = (
-        dir2vec[shape_init_mesh_up],
-        dir2vec[shape_init_mesh_front],
-    )
-    y_ = np.cross(z_, x_)
-    std2mesh = np.stack([x_, y_, z_], axis=0).T
-    mesh2std = np.linalg.inv(std2mesh)
-    mesh.vertices = np.dot(mesh2std, mesh.vertices.T).T
-    if front_x_to_y:
-        x = mesh.vertices[:, 1].copy()
-        y = -mesh.vertices[:, 0].copy()
-        mesh.vertices[:, 0] = x
-        mesh.vertices[:, 1] = y
-
-    v_pos = torch.tensor(mesh.vertices, dtype=torch.float32)
-    t_pos_idx = torch.tensor(mesh.faces, dtype=torch.int64)
-
-    if hasattr(mesh, "visual") and hasattr(mesh.visual, "uv"):
-        v_tex = torch.tensor(mesh.visual.uv, dtype=torch.float32)
-        if flip_uv:
-            v_tex[:, 1] = 1.0 - v_tex[:, 1]
-        t_tex_idx = t_pos_idx.clone()
-        if (
-            hasattr(mesh.visual.material, "baseColorTexture")
-            and mesh.visual.material.baseColorTexture
-        ):
-            texture = torch.tensor(
-                np.array(mesh.visual.material.baseColorTexture) / 255.0,
-                dtype=torch.float32,
-            )[..., :3]
-        else:
-            texture = torch.zeros(
-                (default_uv_size, default_uv_size, 3), dtype=torch.float32
-            )
-    else:
-        v_tex = None
-        t_tex_idx = None
-        texture = None
-
-    textured_mesh = TexturedMesh(
-        v_pos=v_pos,
-        t_pos_idx=t_pos_idx,
-        v_tex=v_tex,
-        t_tex_idx=t_tex_idx,
-        texture=texture,
-    )
-
-    if merge_vertices:
-        mesh.merge_vertices(merge_tex=True)
-        textured_mesh.set_stitched_mesh(
-            torch.tensor(mesh.vertices, dtype=torch.float32),
-            torch.tensor(mesh.faces, dtype=torch.int64),
-        )
-
-    textured_mesh.to(device)
-
-    if return_transform:
-        return textured_mesh, np.array(centroid), max_scale / scale
-
-    return textured_mesh
+from .mesh import TexturedMesh
+from .utils import get_clip_space_position, transform_points_homo
 
 
 @dataclass
@@ -238,6 +23,7 @@ class RenderOutput:
     mask: Optional[torch.BoolTensor] = None
     depth: Optional[torch.FloatTensor] = None
     normal: Optional[torch.FloatTensor] = None
+    tangent: Optional[torch.FloatTensor] = None
     pos: Optional[torch.FloatTensor] = None
 
 
@@ -267,7 +53,12 @@ class NVDiffRastContextWrapper:
         A tuple of two tensors. The first output tensor has shape [minibatch_size, height, width, 4] and contains the main rasterizer output in order (u, v, z/w, triangle_id). If the OpenGL context was configured to output image-space derivatives of barycentrics, the second output tensor will also have shape [minibatch_size, height, width, 4] and contain said derivatives in order (du/dX, du/dY, dv/dX, dv/dY). Otherwise it will be an empty tensor with shape [minibatch_size, height, width, 0].
         """
         return dr.rasterize(
-            self.ctx, pos.float(), tri.int(), resolution, ranges, grad_db
+            self.ctx,
+            pos.float().contiguous(),
+            tri.int().contiguous(),
+            resolution,
+            ranges,
+            grad_db,
         )
 
     def interpolate(self, attr, rast, tri, rast_db=None, diff_attrs=None):
@@ -285,7 +76,9 @@ class NVDiffRastContextWrapper:
         Returns:
         A tuple of two tensors. The first output tensor contains interpolated attributes and has shape [minibatch_size, height, width, num_attributes]. If rast_db and diff_attrs were specified, the second output tensor contains the image-space derivatives of the selected attributes and has shape [minibatch_size, height, width, 2 * len(diff_attrs)]. The derivatives of the first selected attribute A will be on channels 0 and 1 as (dA/dX, dA/dY), etc. Otherwise, the second output tensor will be an empty tensor with shape [minibatch_size, height, width, 0].
         """
-        return dr.interpolate(attr.float(), rast, tri.int(), rast_db, diff_attrs)
+        return dr.interpolate(
+            attr.float().contiguous(), rast, tri.int().contiguous(), rast_db, diff_attrs
+        )
 
     def texture(
         self,
@@ -354,21 +147,6 @@ class NVDiffRastContextWrapper:
             topology_hash,
             pos_gradient_boost,
         )
-
-
-def get_clip_space_position(pos: torch.FloatTensor, mvp_mtx: torch.FloatTensor):
-    pos_homo = torch.cat([pos, torch.ones([pos.shape[0], 1]).to(pos)], dim=-1)
-    return torch.matmul(pos_homo, mvp_mtx.permute(0, 2, 1))
-
-
-def transform_points_homo(pos: torch.FloatTensor, mtx: torch.FloatTensor):
-    batch_size = pos.shape[0]
-    pos_shape = pos.shape[1:-1]
-    pos = pos.reshape(batch_size, -1, 3)
-    pos_homo = torch.cat([pos, torch.ones_like(pos[..., 0:1])], dim=-1)
-    pos = (pos_homo.unsqueeze(2) * mtx.unsqueeze(1)).sum(-1)[..., :3]
-    pos = pos.reshape(batch_size, *pos_shape, 3)
-    return pos
 
 
 class DepthNormalizationStrategy(ABC):
@@ -448,10 +226,12 @@ def render(
     render_attr: bool = True,
     render_depth: bool = True,
     render_normal: bool = True,
+    render_tangent: bool = False,
     depth_normalization_strategy: DepthNormalizationStrategy = DepthControlNetNormalization(),
     attr_background: Union[float, torch.FloatTensor] = 0.5,
     antialias_attr=False,
-    normal_background: Union[float, torch.FloatTensor] = 0.5,
+    normal_background: Union[float, torch.FloatTensor] = 0.0,
+    tangent_background: Union[float, torch.FloatTensor] = 0.0,
     texture_override=None,
     texture_filter_mode: str = "linear",
 ) -> RenderOutput:
@@ -496,4 +276,35 @@ def render(
         gb_nrm[~mask] = normal_background
         output_dict["normal"] = gb_nrm
 
+    if render_tangent:
+        gb_tang, _ = ctx.interpolate(mesh.v_tang[None], rast, mesh.stitched_t_pos_idx)
+        gb_tang = F.normalize(gb_tang, dim=-1, p=2)
+        gb_tang[~mask] = tangent_background
+        output_dict["tangent"] = gb_tang
+
     return RenderOutput(**output_dict)
+
+
+def tensor_to_image(
+    data: Union[Image.Image, torch.Tensor, np.ndarray],
+    batched: bool = False,
+    format: str = "HWC",
+) -> Union[Image.Image, List[Image.Image]]:
+    if isinstance(data, Image.Image):
+        return data
+    if isinstance(data, torch.Tensor):
+        data = data.detach().cpu().numpy()
+    if data.dtype == np.float32 or data.dtype == np.float16:
+        data = (data * 255).astype(np.uint8)
+    elif data.dtype == np.bool_:
+        data = data.astype(np.uint8) * 255
+    assert data.dtype == np.uint8
+    if format == "CHW":
+        if batched and data.ndim == 4:
+            data = data.transpose((0, 2, 3, 1))
+        elif not batched and data.ndim == 3:
+            data = data.transpose((1, 2, 0))
+
+    if batched:
+        return [Image.fromarray(d) for d in data]
+    return Image.fromarray(data)
