@@ -7,7 +7,6 @@ import torch.nn.functional as F
 
 from .blend import PoissonBlendingSolver
 from .camera import Camera
-from .cv_ops import inpaint_cvc
 from .mesh import TexturedMesh
 from .render import NVDiffRastContextWrapper, SimpleNormalization, render
 from .utils import IMAGE_TYPE, get_clip_space_position, image_to_tensor
@@ -376,6 +375,9 @@ def uv_padding(attr: torch.FloatTensor, inside_mask: torch.BoolTensor, radius: i
         print(
             "Warning: UV blending result is out of range [0, 1], force clamped before UV padding."
         )
+
+    from .cv_ops import inpaint_cvc
+
     attr_padded = inpaint_cvc(attr.clamp(0.0, 1.0), ~inside_mask, radius)
     return attr_padded
 
