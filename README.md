@@ -15,6 +15,7 @@ Highlight Features: Generate multi-view images
 
 ## 🔥 Updates
 
+* [2025-06-13] Release our SD2.1-based geometry-conditioned adapters with low VRAM requirements (<10G). [See [guidelines](#text-geometry-to-multiview-generation)]
 * [2025-05-15] Release full pipeline for text-to-texture and image-to-texture generation. [See [guidelines](#usage-texture-generation)]
 * [2025-04-23] Release dataset ([Objaverse-Ortho10View](https://huggingface.co/datasets/huanngzh/Objaverse-Ortho10View) and [Objaverse-Rand6View](https://huggingface.co/datasets/huanngzh/Objaverse-Rand6View)) and training code. [See [guidelines](#️-training)]
 * [2025-03-31] Release text/image-conditioned 3D texture generation demos on [Text2Texture](https://huggingface.co/spaces/VAST-AI/MV-Adapter-Text2Texture) and [Image2Texture](https://huggingface.co/spaces/VAST-AI/MV-Adapter-Img2Texture). Feel free to try them!
@@ -278,6 +279,8 @@ python -m scripts.inference_i2mv_sd \
 
 **Importantly**, when using geometry-condition generation, please make sure that the orientation of the mesh you provide is consistent with the following example. Otherwise, you need to adjust the angles in the scripts when rendering the view.
 
+If your VRAM is enough (>12G), please use the SDXL version:
+
 **With SDXL:**
 
 ```Bash
@@ -288,13 +291,17 @@ python -m scripts.inference_tg2mv_sdxl \
 
 ![tg2mv_example_out](assets/demo/tg2mv/ac9d4e4f44f34775ad46878ba8fbfd86_mv.png)
 
+If your VRAM is smaller than 6G, please use the SD2.1 version:
+
 ```Bash
-python -m scripts.inference_tg2mv_sdxl \
---mesh assets/demo/tg2mv/b5f0f0f33e3644d1ba73576ceb486d42.glb \
---text "Optimus Prime, a character from Transformers, with blue, red and gray colors, and has a flame-like pattern on the body"
+python -m scripts.inference_tg2mv_sd \
+--mesh assets/demo/tg2mv/ac9d4e4f44f34775ad46878ba8fbfd86.glb \
+--text "Mater, a rusty and beat-up tow truck from the 2006 Disney/Pixar animated film 'Cars', with a rusty brown exterior, big blue eyes." --scheduler ddpm
 ```
 
 #### Image-Geometry to Multiview Generation
+
+If your VRAM is enough (>16G), please use the SDXL version:
 
 **With SDXL:**
 
@@ -306,6 +313,17 @@ python -m scripts.inference_ig2mv_sdxl \
 ```
 
 ![example_ig2mv_out](assets/demo/ig2mv/1ccd5c1563ea4f5fb8152eac59dabd5c_mv.png)
+
+If your VRAM is smaller than 10G, please use the SD2.1 version:
+
+**with SD2.1:**
+
+```Bash
+python -m scripts.inference_ig2mv_sd \
+--image assets/demo/ig2mv/1ccd5c1563ea4f5fb8152eac59dabd5c.jpeg \
+--mesh assets/demo/ig2mv/1ccd5c1563ea4f5fb8152eac59dabd5c.glb \
+--output output.png --remove_bg --scheduler ddpm
+```
 
 #### Partial Image + Geometry to Multiview
 
@@ -369,6 +387,8 @@ wget https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.p
 **Usage**
 
 > All in one script
+
+If your computational resources are limited (VRAM<10G), you can pass `--variant sd21` to the following command, and it will use the SD2.1-based model to create the texture.
 
 Text-conditioned texture generation:
 

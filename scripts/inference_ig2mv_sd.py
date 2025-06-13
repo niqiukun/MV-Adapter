@@ -9,7 +9,7 @@ from tqdm import tqdm
 from transformers import AutoModelForImageSegmentation
 
 from mvadapter.models.attention_processor import DecoupledMVRowColSelfAttnProcessor2_0
-from mvadapter.pipelines.pipeline_mvadapter_i2mv_sdxl import MVAdapterI2MVSDXLPipeline
+from mvadapter.pipelines.pipeline_mvadapter_i2mv_sd import MVAdapterI2MVSDPipeline
 from mvadapter.schedulers.scheduling_shift_snr import ShiftSNRScheduler
 from mvadapter.utils import make_image_grid, tensor_to_image
 from mvadapter.utils.mesh_utils import (
@@ -39,8 +39,8 @@ def prepare_pipeline(
         pipe_kwargs["unet"] = UNet2DConditionModel.from_pretrained(unet_model)
 
     # Prepare pipeline
-    pipe: MVAdapterI2MVSDXLPipeline
-    pipe = MVAdapterI2MVSDXLPipeline.from_pretrained(base_model, **pipe_kwargs)
+    pipe: MVAdapterI2MVSDPipeline
+    pipe = MVAdapterI2MVSDPipeline.from_pretrained(base_model, **pipe_kwargs)
 
     # Load scheduler if provided
     scheduler_class = None
@@ -59,7 +59,7 @@ def prepare_pipeline(
         num_views=num_views, self_attn_processor=DecoupledMVRowColSelfAttnProcessor2_0
     )
     pipe.load_custom_adapter(
-        adapter_path, weight_name="mvadapter_ig2mv_sdxl.safetensors"
+        adapter_path, weight_name="mvadapter_ig2mv_sd21.safetensors"
     )
 
     pipe.to(device=device, dtype=dtype)
@@ -210,11 +210,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Models
     parser.add_argument(
-        "--base_model", type=str, default="stabilityai/stable-diffusion-xl-base-1.0"
+        "--base_model", type=str, default="stabilityai/stable-diffusion-2-1-base"
     )
-    parser.add_argument(
-        "--vae_model", type=str, default="madebyollin/sdxl-vae-fp16-fix"
-    )
+    parser.add_argument("--vae_model", type=str, default=None)
     parser.add_argument("--unet_model", type=str, default=None)
     parser.add_argument("--scheduler", type=str, default=None)
     parser.add_argument("--lora_model", type=str, default=None)
@@ -275,8 +273,8 @@ if __name__ == "__main__":
         num_views=args.num_views,
         text=args.text,
         image=args.image,
-        height=768,
-        width=768,
+        height=512,
+        width=512,
         num_inference_steps=args.num_inference_steps,
         guidance_scale=args.guidance_scale,
         seed=args.seed,

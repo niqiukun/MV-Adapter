@@ -9,11 +9,10 @@ from transformers import AutoModelForImageSegmentation
 from mvadapter.pipelines.pipeline_texture import ModProcessConfig, TexturePipeline
 from mvadapter.utils import make_image_grid
 
-from .inference_ig2mv_sdxl import prepare_pipeline, remove_bg, run_pipeline
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", type=str, default="cuda")
+    parser.add_argument("--variant", type=str, default="sdxl", choices=["sdxl", "sd21"])
     # I/O
     parser.add_argument("--mesh", type=str, required=True)
     parser.add_argument("--image", type=str, required=True)
@@ -27,13 +26,30 @@ if __name__ == "__main__":
     parser.add_argument("--remove_bg", action="store_true")
     args = parser.parse_args()
 
+    if args.variant == "sdxl":
+        from .inference_ig2mv_sdxl import prepare_pipeline, remove_bg, run_pipeline
+
+        base_model = "stabilityai/stable-diffusion-xl-base-1.0"
+        vae_model = "madebyollin/sdxl-vae-fp16-fix"
+        height = width = 768
+        uv_size = 4096
+    elif args.variant == "sd21":
+        from .inference_ig2mv_sd import prepare_pipeline, remove_bg, run_pipeline
+
+        base_model = "stabilityai/stable-diffusion-2-1-base"
+        vae_model = None
+        height = width = 512
+        uv_size = 2048
+    else:
+        raise ValueError(f"Invalid variant: {args.variant}")
+
     device = args.device
     num_views = 6
 
     # Prepare pipelines
     pipe = prepare_pipeline(
-        base_model="stabilityai/stable-diffusion-xl-base-1.0",
-        vae_model="madebyollin/sdxl-vae-fp16-fix",
+        base_model=base_model,
+        vae_model=vae_model,
         unet_model=None,
         lora_model=None,
         adapter_path="huanngzh/mv-adapter",
@@ -74,8 +90,8 @@ if __name__ == "__main__":
         num_views=num_views,
         text=args.text,
         image=args.image,
-        height=768,
-        width=768,
+        height=height,
+        width=width,
         num_inference_steps=50,
         guidance_scale=3.0,
         seed=args.seed,
@@ -96,7 +112,7 @@ if __name__ == "__main__":
         save_name=args.save_name,
         uv_unwarp=True,
         preprocess_mesh=args.preprocess_mesh,
-        uv_size=4096,
+        uv_size=uv_size,
         rgb_path=mv_path,
         rgb_process_config=ModProcessConfig(view_upscale=True, inpaint_mode="view"),
         camera_azimuth_deg=[x - 90 for x in [0, 90, 180, 270, 180, 180]],
