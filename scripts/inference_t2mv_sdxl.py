@@ -5,9 +5,9 @@ from diffusers import AutoencoderKL, DDPMScheduler, LCMScheduler, UNet2DConditio
 
 from mvadapter.pipelines.pipeline_mvadapter_t2mv_sdxl import MVAdapterT2MVSDXLPipeline
 from mvadapter.schedulers.scheduling_shift_snr import ShiftSNRScheduler
-from mvadapter.utils.mesh_utils import get_orthogonal_camera
-from mvadapter.utils.geometry import get_plucker_embeds_from_cameras_ortho
 from mvadapter.utils import make_image_grid
+from mvadapter.utils.geometry import get_plucker_embeds_from_cameras_ortho
+from mvadapter.utils.mesh_utils import get_orthogonal_camera
 
 
 def prepare_pipeline(
@@ -54,14 +54,19 @@ def prepare_pipeline(
     pipe.cond_encoder.to(device=device, dtype=dtype)
 
     # load lora if provided
+    adapter_name_list = []
     if lora_model is not None:
-        model_, name_ = lora_model.rsplit("/", 1)
-        pipe.load_lora_weights(model_, weight_name=name_)
+        lora_model_list = lora_model.split(",")
+        for lora_model_ in lora_model_list:
+            model_, name_ = lora_model_.strip().rsplit("/", 1)
+            adapter_name = name_.split(".")[0]
+            adapter_name_list.append(adapter_name)
+            pipe.load_lora_weights(model_, weight_name=name_, adapter_name=adapter_name)
 
     # vae slicing for lower memory usage
     pipe.enable_vae_slicing()
 
-    return pipe
+    return pipe, adapter_name_list
 
 
 def run_pipeline(
@@ -74,10 +79,23 @@ def run_pipeline(
     guidance_scale,
     seed,
     negative_prompt,
-    lora_scale=1.0,
+    lora_scale=["1.0"],
     device="cuda",
     azimuth_deg=None,
+    adapter_name_list=[],
 ):
+    # Set lora scale
+    if len(adapter_name_list) > 0:
+        if len(lora_scale) == 1:
+            lora_scale = [lora_scale[0]] * len(adapter_name_list)
+        else:
+            assert len(lora_scale) == len(
+                adapter_name_list
+            ), "Number of lora scales must match number of adapters"
+        lora_scale = [float(s) for s in lora_scale]
+        pipe.set_adapters(adapter_name_list, adapter_weights=lora_scale)
+        print(f"Loaded {len(adapter_name_list)} adapters with scales {lora_scale}")
+
     # Prepare cameras
     if azimuth_deg is None:
         azimuth_deg = [0, 45, 90, 180, 270, 315]
@@ -97,7 +115,7 @@ def run_pipeline(
     )
     control_images = ((plucker_embeds + 1.0) / 2.0).clamp(0, 1)
 
-    pipe_kwargs = {}
+    pipe_kwargs = {"max_sequence_length": 214}
     if seed != -1:
         pipe_kwargs["generator"] = torch.Generator(device=device).manual_seed(seed)
 
@@ -111,7 +129,6 @@ def run_pipeline(
         control_image=control_images,
         control_conditioning_scale=1.0,
         negative_prompt=negative_prompt,
-        cross_attention_kwargs={"scale": lora_scale},
         **pipe_kwargs,
     ).images
 
@@ -147,13 +164,16 @@ if __name__ == "__main__":
         type=str,
         default="watermark, ugly, deformed, noisy, blurry, low contrast",
     )
-    parser.add_argument("--lora_scale", type=float, default=1.0)
+    parser.add_argument("--lora_scale", type=str, default="1.0")
     parser.add_argument("--output", type=str, default="output.png")
+    parser.add_argument(
+        "--save_alone", action="store_true", help="Save individual images separately"
+    )
     args = parser.parse_args()
 
     num_views = len(args.azimuth_deg)
 
-    pipe = prepare_pipeline(
+    pipe, adapter_name_list = prepare_pipeline(
         base_model=args.base_model,
         vae_model=args.vae_model,
         unet_model=args.unet_model,
@@ -178,4 +198,9 @@ if __name__ == "__main__":
         device=args.device,
         azimuth_deg=args.azimuth_deg,
     )
-    make_image_grid(images, rows=1).save(args.output)
+
+    if args.save_alone:
+        for i, image in enumerate(images):
+            image.save(f"{args.output.split('.')[0]}_{i}.png")
+    else:
+        make_image_grid(images, rows=1).save(args.output)

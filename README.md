@@ -15,6 +15,7 @@ Highlight Features: Generate multi-view images
 
 ## 🔥 Updates
 
+* [2025-06-14] Support multiple loras in text-to-multi-view synthesis for highly-customized generation. [See [guidelines](#text-to-multiview-generation-1)]
 * [2025-06-13] Release our SD2.1-based geometry-conditioned adapters with low VRAM requirements (<10G). [See [guidelines](#text-geometry-to-multiview-generation)]
 * [2025-05-15] Release full pipeline for text-to-texture and image-to-texture generation. [See [guidelines](#usage-texture-generation)]
 * [2025-04-23] Release dataset ([Objaverse-Ortho10View](https://huggingface.co/datasets/huanngzh/Objaverse-Ortho10View) and [Objaverse-Rand6View](https://huggingface.co/datasets/huanngzh/Objaverse-Rand6View)) and training code. [See [guidelines](#️-training)]
@@ -216,6 +217,21 @@ python -m scripts.inference_t2mv_sdxl --lora_model "goofyai/3d_render_style_xl/3
 --lora_scale 1.0 \
 --output output.png
 ```
+
+**With Multiple LoRAs:**
+
+Download lora models from [here](https://github.com/huanngzh/MV-Adapter/issues/43#issuecomment-2909871563), and put them into `./loras`.
+
+```Bash
+python -m scripts.inference_t2mv_sdxl \
+--lora_model "loras/3dpolygonStyle.safetensors,loras/3D_Animation_Style-000009.safetensors,loras/3D_Render_Illu_Buns-000010.safetensors,loras/xl_more_art-full_v1.safetensors,loras/add-detail-xl.safetensors,loras/spo_sdxl_10ep_4k-data_lora_webui.safetensors,loras/APose_v2.safetensors,loras/1980s_Fantasy_Style_SDXL.safetensors,loras/MMOCharacterGen.safetensors" \
+--text "solo,a 3d models of red lion full body, fantasy style ,no background , masterpiece, best quality, amazing quality, very aesthetic, absurdres, newest , master piece , ultra-detailed, 8K, HDR, Fujifilm cinematic style,even lighting, clean lines, neutral colors, no contrast" \
+--seed 42 \
+--lora_scale 0.2,0.2,0.2,0.2,0.2,0.2,2,0.2,0.2 \
+--output output.png
+```
+
+![demo_t2mv_multi_loras](./assets/doc/demo_t2mv_multi_loras.png)
 
 **With ControlNet:**
 
