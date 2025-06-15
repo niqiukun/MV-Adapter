@@ -288,7 +288,11 @@ def load_mesh(
     v_pos = torch.tensor(mesh.vertices, dtype=torch.float32)
     t_pos_idx = torch.tensor(mesh.faces, dtype=torch.int64)
 
-    if hasattr(mesh, "visual") and hasattr(mesh.visual, "uv"):
+    if (
+        hasattr(mesh, "visual")
+        and hasattr(mesh.visual, "uv")
+        and mesh.visual.uv is not None
+    ):
         v_tex = torch.tensor(mesh.visual.uv, dtype=torch.float32)
         if flip_uv:
             v_tex[:, 1] = 1.0 - v_tex[:, 1]
