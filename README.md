@@ -27,27 +27,7 @@ Highlight Features: Generate multi-view images
 
 ## TOC
 
-- [MV-Adapter: Multi-view Consistent Image Generation Made Easy🚀](#mv-adapter-multi-view-consistent-image-generation-made-easy)
-  - [🏠 Project Page | Paper | Model Weights | Demo | ComfyUI](#-project-page--paper--model-weights--demo--comfyui)
-  - [🔥 Updates](#-updates)
-  - [TOC](#toc)
-  - [Model Zoo \& Demos](#model-zoo--demos)
-  - [Installation](#installation)
-  - [Notes](#notes)
-    - [System Requirements](#system-requirements)
-  - [Usage: Multiview Generation](#usage-multiview-generation)
-    - [Launch Demo](#launch-demo)
-      - [Text to Multiview Generation](#text-to-multiview-generation)
-      - [Image to Multiview Generation](#image-to-multiview-generation)
-    - [Inference Scripts](#inference-scripts)
-      - [Text to Multiview Generation](#text-to-multiview-generation-1)
-      - [Image to Multiview Generation](#image-to-multiview-generation-1)
-      - [Text-Geometry to Multiview Generation](#text-geometry-to-multiview-generation)
-      - [Image-Geometry to Multiview Generation](#image-geometry-to-multiview-generation)
-      - [Partial Image + Geometry to Multiview](#partial-image--geometry-to-multiview)
-    - [ComfyUI](#comfyui)
-  - [Usage: Texture Generation](#usage-texture-generation)
-  - [Citation](#citation)
+[TOC]
 
 ## Model Zoo & Demos
 
