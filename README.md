@@ -27,7 +27,29 @@ Highlight Features: Generate multi-view images
 
 ## TOC
 
-[TOC]
+- [MV-Adapter: Multi-view Consistent Image Generation Made Easy🚀](#mv-adapter-multi-view-consistent-image-generation-made-easy)
+  - [🏠 Project Page | Paper | Model Weights | Demo | ComfyUI](#-project-page--paper--model-weights--demo--comfyui)
+  - [🔥 Updates](#-updates)
+  - [TOC](#toc)
+  - [Model Zoo \& Demos](#model-zoo--demos)
+  - [Installation](#installation)
+  - [Notes](#notes)
+    - [System Requirements](#system-requirements)
+  - [Usage: Multiview Generation](#usage-multiview-generation)
+    - [Launch Demo](#launch-demo)
+      - [Text to Multiview Generation](#text-to-multiview-generation)
+      - [Image to Multiview Generation](#image-to-multiview-generation)
+    - [Inference Scripts](#inference-scripts)
+      - [Text to Multiview Generation](#text-to-multiview-generation-1)
+      - [Image to Multiview Generation](#image-to-multiview-generation-1)
+      - [Text-Geometry to Multiview Generation](#text-geometry-to-multiview-generation)
+      - [Image-Geometry to Multiview Generation](#image-geometry-to-multiview-generation)
+      - [Partial Image + Geometry to Multiview](#partial-image--geometry-to-multiview)
+    - [ComfyUI](#comfyui)
+  - [Usage: Texture Generation](#usage-texture-generation)
+  - [📊 Dataset](#-dataset)
+  - [🏋️ Training](#%EF%B8%8F-training)
+  - [Citation](#citation)
 
 ## Model Zoo & Demos
 
@@ -410,7 +432,7 @@ It will save the textured model into `<save_dir>/<save_name>_shaded.glb`.
 
 ## 📊 Dataset
 
-Our training dataset, rendered from [Objaverse](https://huggingface.co/datasets/allenai/objaverse), can be downloaded from [Objaverse-Ortho10View](https://huggingface.co/datasets/huanngzh/Objaverse-Ortho10View) and [Objaverse-Rand6View](https://huggingface.co/datasets/huanngzh/Objaverse-Rand6View).
+Our training dataset, rendered from [Objaverse](https://huggingface.co/datasets/allenai/objaverse), can be downloaded from [Objaverse-Ortho10View](https://huggingface.co/datasets/huanngzh/Objaverse-Ortho10View) and [Objaverse-Rand6View](https://huggingface.co/datasets/huanngzh/Objaverse-Rand6View). Our render code can be found at [bpyrenderer](https://github.com/huanngzh/bpy-renderer).
 
 * [Objaverse-Ortho10View](https://huggingface.co/datasets/huanngzh/Objaverse-Ortho10View) contains 10 orthographic views of 1024x1024 resolution, and is used as ground truth.
 * [Objaverse-Rand6View](https://huggingface.co/datasets/huanngzh/Objaverse-Rand6View) contains 6 randomly distributed views, and is used as reference image conditions.
