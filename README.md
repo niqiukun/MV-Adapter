@@ -15,6 +15,7 @@ Highlight Features: Generate multi-view images
 
 ## 🔥 Updates
 
+* [2025-06-26] MV-Adapter is accepted by [ICCV 2025](https://iccv.thecvf.com/). 🎉🎉🎉
 * [2025-06-14] Support multiple loras in text-to-multi-view synthesis for highly-customized generation. [See [guidelines](#text-to-multiview-generation-1)]
 * [2025-06-13] Release our SD2.1-based geometry-conditioned adapters with low VRAM requirements (<10G). [See [guidelines](#text-geometry-to-multiview-generation)]
 * [2025-05-15] Release full pipeline for text-to-texture and image-to-texture generation. [See [guidelines](#usage-texture-generation)]
