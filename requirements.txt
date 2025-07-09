@@ -27,3 +27,4 @@ open3d
 pymeshlab
 cvcuda_cu12
 jaxtyping
+Ninja
