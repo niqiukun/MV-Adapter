@@ -26,3 +26,4 @@ spandrel==0.4.1
 open3d
 pymeshlab
 cvcuda_cu12
+jaxtyping

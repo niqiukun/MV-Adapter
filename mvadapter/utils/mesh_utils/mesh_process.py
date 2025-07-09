@@ -3,8 +3,11 @@ import open3d as o3d
 import pymeshlab
 import torch
 import trimesh
-from pymeshlab import Percentage
+# from pymeshlab import Percentage
 
+def Percentage(value):
+    """Convert a float value to a Percentage object."""
+    return pymeshlab.Percentage(value * 100) if isinstance(value, float) else value
 
 ### Mesh Utils ###
 ##### read mesh
