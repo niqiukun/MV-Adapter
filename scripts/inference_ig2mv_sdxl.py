@@ -77,6 +77,7 @@ def prepare_pipeline(
 
 
 def remove_bg(image, net, transform, device):
+    image = image.convert("RGB")
     image_size = image.size
     input_images = transform(image).unsqueeze(0).to(device)
     with torch.no_grad():
