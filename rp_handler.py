@@ -41,7 +41,7 @@ def handler(event):
         height = width = 512
         uv_size = 2048
     else:
-        raise ValueError(f"Invalid variant: {args["variant"]}")
+        raise ValueError(f"Invalid variant: {args['variant']}")
 
     device = args["device"]
     num_views = 6
@@ -100,7 +100,7 @@ def handler(event):
         device=device,
         remove_bg_fn=remove_bg_fn,
     )
-    mv_path = os.path.join(args["save_dir"], f"{args["save_name"]}.png")
+    mv_path = os.path.join(args["save_dir"], f"{args['save_name']}.png")
     make_image_grid(images, rows=1).save(mv_path)
 
     torch.cuda.empty_cache()
