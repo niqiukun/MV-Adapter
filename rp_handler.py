@@ -26,14 +26,14 @@ def handler(event):
       "remove_bg": input.get("remove_bg", False),
     }
 
-    if args.variant == "sdxl":
+    if args["variant"] == "sdxl":
         from .inference_ig2mv_sdxl import prepare_pipeline, remove_bg, run_pipeline
 
         base_model = "stabilityai/stable-diffusion-xl-base-1.0"
         vae_model = "madebyollin/sdxl-vae-fp16-fix"
         height = width = 768
         uv_size = 4096
-    elif args.variant == "sd21":
+    elif args["variant"] == "sd21":
         from .inference_ig2mv_sd import prepare_pipeline, remove_bg, run_pipeline
 
         base_model = "stabilityai/stable-diffusion-2-1-base"
@@ -41,9 +41,9 @@ def handler(event):
         height = width = 512
         uv_size = 2048
     else:
-        raise ValueError(f"Invalid variant: {args.variant}")
+        raise ValueError(f"Invalid variant: {args["variant"]}")
 
-    device = args.device
+    device = args["device"]
     num_views = 6
 
     # Prepare pipelines
@@ -58,11 +58,11 @@ def handler(event):
         device=device,
         dtype=torch.float16,
     )
-    if args.remove_bg:
+    if args["remove_bg"]:
         birefnet = AutoModelForImageSegmentation.from_pretrained(
             "ZhengPeng7/BiRefNet", trust_remote_code=True
         )
-        birefnet.to(args.device)
+        birefnet.to(args["device"])
         transform_image = transforms.Compose(
             [
                 transforms.Resize((1024, 1024)),
@@ -70,7 +70,7 @@ def handler(event):
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ]
         )
-        remove_bg_fn = lambda x: remove_bg(x, birefnet, transform_image, args.device)
+        remove_bg_fn = lambda x: remove_bg(x, birefnet, transform_image, args["device"])
     else:
         remove_bg_fn = None
 
@@ -81,37 +81,37 @@ def handler(event):
     )
     print("Pipeline ready.")
 
-    os.makedirs(args.save_dir, exist_ok=True)
+    os.makedirs(args["save_dir"], exist_ok=True)
 
     # 1. run MV-Adapter to generate multi-view images
     images, _, _, _ = run_pipeline(
         pipe,
-        mesh_path=args.mesh,
+        mesh_path=args["mesh"],
         num_views=num_views,
-        text=args.text,
-        image=args.image,
+        text=args["text"],
+        image=args["image"],
         height=height,
         width=width,
         num_inference_steps=50,
         guidance_scale=3.0,
-        seed=args.seed,
-        reference_conditioning_scale=args.reference_conditioning_scale,
+        seed=args["seed"],
+        reference_conditioning_scale=args["reference_conditioning_scale"],
         negative_prompt="watermark, ugly, deformed, noisy, blurry, low contrast",
         device=device,
         remove_bg_fn=remove_bg_fn,
     )
-    mv_path = os.path.join(args.save_dir, f"{args.save_name}.png")
+    mv_path = os.path.join(args["save_dir"], f"{args["save_name"]}.png")
     make_image_grid(images, rows=1).save(mv_path)
 
     torch.cuda.empty_cache()
 
     # 2. un-project and complete texture
     out = texture_pipe(
-        mesh_path=args.mesh,
-        save_dir=args.save_dir,
-        save_name=args.save_name,
+        mesh_path=args["mesh"],
+        save_dir=args["save_dir"],
+        save_name=args["save_name"],
         uv_unwarp=True,
-        preprocess_mesh=args.preprocess_mesh,
+        preprocess_mesh=args["preprocess_mesh"],
         uv_size=uv_size,
         rgb_path=mv_path,
         rgb_process_config=ModProcessConfig(view_upscale=True, inpaint_mode="view"),
