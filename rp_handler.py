@@ -27,14 +27,14 @@ def handler(event):
     }
 
     if args["variant"] == "sdxl":
-        from .inference_ig2mv_sdxl import prepare_pipeline, remove_bg, run_pipeline
+        from scripts.inference_ig2mv_sdxl import prepare_pipeline, remove_bg, run_pipeline
 
         base_model = "stabilityai/stable-diffusion-xl-base-1.0"
         vae_model = "madebyollin/sdxl-vae-fp16-fix"
         height = width = 768
         uv_size = 4096
     elif args["variant"] == "sd21":
-        from .inference_ig2mv_sd import prepare_pipeline, remove_bg, run_pipeline
+        from scripts.inference_ig2mv_sd import prepare_pipeline, remove_bg, run_pipeline
 
         base_model = "stabilityai/stable-diffusion-2-1-base"
         vae_model = None
