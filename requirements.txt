@@ -28,3 +28,4 @@ pymeshlab
 cvcuda_cu12
 jaxtyping
 Ninja
+gltflib
