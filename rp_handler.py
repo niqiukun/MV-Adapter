@@ -121,4 +121,5 @@ def handler(event):
 
 # Start the Serverless function when the script is run
 if __name__ == '__main__':
+    print(f"Serverless Service Start")
     runpod.serverless.start({ 'handler': handler })
