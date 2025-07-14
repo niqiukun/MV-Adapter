@@ -10,6 +10,7 @@ import runpod
 
 def handler(event):
     print(f"Worker Start")
+    return "Hello, World!"
     # input = event['input']
     
     # args = {
@@ -118,6 +119,8 @@ def handler(event):
     #     camera_azimuth_deg=[x - 90 for x in [0, 90, 180, 270, 180, 180]],
     # )
     # print(f"Output saved to {out.shaded_model_save_path}")
+    
+    # return out.shaded_model_save_path
 
 # Start the Serverless function when the script is run
 if __name__ == '__main__':
