@@ -1,12 +1,12 @@
 import runpod
 
-import os
-import torch
-from torchvision import transforms
-from transformers import AutoModelForImageSegmentation
+# import os
+# import torch
+# from torchvision import transforms
+# from transformers import AutoModelForImageSegmentation
 
-from mvadapter.pipelines.pipeline_texture import ModProcessConfig, TexturePipeline
-from mvadapter.utils import make_image_grid
+# from mvadapter.pipelines.pipeline_texture import ModProcessConfig, TexturePipeline
+# from mvadapter.utils import make_image_grid
 
 def handler(event):
     print(f"Worker Start")
