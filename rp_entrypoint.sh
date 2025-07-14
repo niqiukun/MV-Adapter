@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-cd /runpod-volume/MV-Adapter || exit 1
+cd /runpod-volume/Stable3DGen || exit 1
+# cd /runpod-volume/MV-Adapter || exit 1
 git pull
 # apt update
 # apt install -y libegl1-mesa-dev libgl1-mesa-dev
